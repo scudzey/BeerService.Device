@@ -1,0 +1,8 @@
+sdkconfig
+sdkconfig.defaults
+sdkconfig.old
+main/cmake/certificate_configuration.cmake
+main/certs
+build
+debug.log
+main/notes.md

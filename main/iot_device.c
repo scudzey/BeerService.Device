@@ -89,6 +89,7 @@ static SemaphoreHandle_t xPourCountMutex;
 
 xTimerHandle timerHndl1Sec;
 
+uint8_t chipid[6];
 
 
 typedef struct {
@@ -251,8 +252,6 @@ void disconnectCallbackHandler(AWS_IoT_Client *pClient, void *data) {
 void aws_iot_task(void *param) {
 
     IoT_Error_t rc = FAILURE;
-    ESP_LOGI(TAG, "Address of keys %s, %s", (const char *)aws_root_ca_pem_start, (const char *)certificate_pem_crt_start);
-
     char topic[100] = {0};
     char cPayload[100] = {0};
     ESP_LOGI(TAG, "AWS IoT SDK Version %d.%d.%d-%s", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_TAG);
@@ -330,7 +329,7 @@ void aws_iot_task(void *param) {
         if (xQueueReceive(aws_message_evt_queue, &event, 100)) {
             
             sprintf(topic, "tapSensor/tap_%02d", event.tapId);
-            sprintf(cPayload, "{ \"count\": %d, \"TapId\": \"tap_%02d\" }", event.pourCount, event.tapId);
+            sprintf(cPayload, "{ \"count\": %d, \"tapId\": \"tap_%02d\", \"deviceId\": \"%02x:%02x:%02x:%02x:%02x:%02x\" }", event.pourCount, event.tapId, chipid[0], chipid[1], chipid[2], chipid[3], chipid[4], chipid[5]);
             ESP_LOGI(TAG, "logging tap change for: %s", topic);
             paramsQOS1.payloadLen = strlen(cPayload);
             rc = aws_iot_mqtt_publish(&mqttClient, topic, strlen(topic), &paramsQOS1);
@@ -390,7 +389,10 @@ void app_main() {
     aws_message_evt_queue = xQueueCreate(10000, sizeof(pourEventFinished_t));
 
     init_wifi();
-    
+
+    esp_efuse_mac_get_default(chipid);
+
+    ESP_LOGI("mac","MacID: %02x:%02x:%02x:%02x:%02x:%02x\n",chipid[0], chipid[1], chipid[2], chipid[3], chipid[4], chipid[5]);
     xTaskCreatePinnedToCore(&aws_iot_task, "aws_iot_task", 9216, NULL, 5, NULL, 1);
     xTaskCreatePinnedToCore(&aws_message_create_task, "1Sec timer publish", 20480, NULL, 10, NULL, 0);
 }

@@ -351,7 +351,7 @@ void aws_message_create_task(void *param) {
     int i = 0;
     for(;;) {
         
-        vTaskDelay(10000 / portTICK_PERIOD_MS);
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
         ESP_LOGI("AWS_MSG", "checking for input change");
         //Lock the mutex for evt_count as we need to reset values to 0 after queueing message
         if ( xPourCountMutex != NULL && xSemaphoreTake( xPourCountMutex, (TickType_t) 10) == pdTRUE) {
